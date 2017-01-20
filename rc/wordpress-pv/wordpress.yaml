@@ -1,0 +1,51 @@
+kind: List
+apiVersion: v1
+items:
+
+- kind: ReplicationController
+  apiVersion: v1
+  metadata:
+    name: wordpress
+    labels:
+      name: wordpress
+  spec:
+    replicas: 3
+    selector:
+      name: wordpress
+    template:
+      metadata:
+        labels:
+          name: wordpress
+      spec:
+        containers:
+        - name: wordpress
+          image: wordpress:latest
+          ports:
+            - containerPort: 80
+              name: wordpress
+          env:
+            - name: WORDPRESS_DB_PASSWORD
+              value: supersecret
+            - name: WORDPRESS_DB_HOST
+              value: 10.96.0.101
+          volumeMounts:
+            - name: wp-nfs-persistent-storage
+              mountPath: "/var/www/html"
+        volumes:
+          - name: wp-nfs-persistent-storage
+            persistentVolumeClaim:
+              claimName: pvc-3g-web-01
+
+- kind: Service
+  apiVersion: v1
+  metadata:
+    labels:
+      name: wordpress
+    name: wordpress
+  spec:
+    clusterIP: 10.96.0.102
+    externalIPs: [ 10.199.54.24,10.199.54.26 ]
+    ports:
+      - port: 80
+    selector:
+      name: wordpress

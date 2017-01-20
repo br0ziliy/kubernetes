@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hello-world
+spec:  # specification of the pod’s contents
+  # restartPolicy: Never indicates that we just want to run the container once and then terminate the pod.
+  restartPolicy: Never
+  containers:
+  - name: hello
+    image: "ubuntu:14.04"
+    # The command overrides the Docker container’s Entrypoint. Command arguments (corresponding to Docker’s Cmd) may be specified using args, as follows:
+    # command: ["/bin/echo"]
+    # args: ["hello","world"]
+    command: ["/bin/echo","hello”,”world"]

@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: List
+items:
+
+- kind: Pod
+  apiVersion: v1
+  metadata:
+    name: www
+    labels:
+      name: www
+  spec:
+    containers:
+      - name: www
+        image: docker-registry:5000/library/webserver:latest
+        env:
+          - name: TZ
+            value: "America/Los_Angeles"
+        ports:
+          - name: http
+            containerPort: 80
+          - name: https
+            containerPort: 443
+        volumeMounts:
+          - name: www-nfs-storage
+            mountPath: "/home/www/workspace"
+          - name: logs-nfs-storage
+            mountPath: "/home/www/mod_perl/apache/logs"
+          - name: local-etc-localtime
+            mountPath: "/etc/localtime"
+            readOnly: true
+          - name: local-sys-fs-selinux
+            mountPath: "/selinux"
+            readOnly: true
+    volumes:
+      - name: www-nfs-storage
+        nfs:
+          server: 10.199.54.5
+          path: "/nfs/exports/share0X"
+      - name: logs-nfs-storage
+        nfs:
+          server: 10.199.54.5
+          path: "/nfs/exports/share0X"
+      - name: local-etc-localtime
+        hostPath:
+          path: "/etc/localtime"
+      - name: local-sys-fs-selinux
+        hostPath:
+          path: "/sys/fs/selinux/"
+
+- kind: Service
+  apiVersion: v1
+  metadata:
+    labels:
+      name: www
+    name: www
+  spec:
+    externalIPs: [ 10.199.54.XXX ]
+    ports:
+      - name: http
+        port: 80
+        # targetPort: 80
+      - name: https
+        port: 443
+        # targetPort: 443
+    selector:
+      name: www
+    # type: LoadBalancer
+    # sessionAffinity: ClientIP
+    

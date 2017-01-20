@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: List
+items:
+
+- kind: Pod
+  apiVersion: v1
+  metadata:
+    name: master01
+    labels:
+      name: master01
+  spec:
+    containers:
+      - name: master01
+        image: docker-registry:5000/library/master:latest
+        ports:
+          - name: mysql
+            containerPort: 3306
+        volumeMounts:
+          - name: master01-nfs-storage
+            mountPath: "/home/www/mysql"
+    volumes:
+      - name: master01-nfs-storage
+        nfs:
+          server: 10.199.54.5
+          path: "/nfs/exports/share0X"
+          
+- kind: Service
+  apiVersion: v1
+  metadata:
+    labels:
+      name: master01
+    name: master01
+  spec:
+    # clusterIP: 10.96.0.100
+    # externalIPs: [ 10.199.54.24, 10.199.54.26 ]
+    ports:
+      - port: 3306
+      # targetPort: 3306
+    selector:
+      name: master01
+    # type: LoadBalancer
+    # sessionAffinity: ClientIP

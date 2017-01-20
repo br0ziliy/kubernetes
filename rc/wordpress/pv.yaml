@@ -1,0 +1,31 @@
+kind: List
+apiVersion: v1
+items:
+
+- kind: PersistentVolume
+  apiVersion: v1
+  metadata:
+    name: pv-5g-db-01
+  spec:
+    capacity:
+      storage: 5Gi
+    accessModes:
+      - ReadWriteMany
+    persistentVolumeReclaimPolicy: Recycle
+    nfs:
+      path: /nfs/exports/share01
+      server: 10.199.54.5
+
+- kind: PersistentVolume
+  apiVersion: v1
+  metadata:
+    name: pv-5g-web-01
+  spec:
+    capacity:
+      storage: 5Gi
+    accessModes:
+      - ReadWriteMany
+    persistentVolumeReclaimPolicy: Recycle
+    nfs:
+      path: /nfs/exports/share02
+      server: 10.199.54.5

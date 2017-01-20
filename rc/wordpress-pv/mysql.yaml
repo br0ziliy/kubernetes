@@ -1,0 +1,47 @@
+kind: List
+apiVersion: v1
+items:
+
+- kind: Pod
+  apiVersion: v1
+  metadata:
+    name: mysql
+    labels:
+      name: mysql
+  spec:
+    containers:
+      - name: mysql
+        image: mysql:latest
+        env:
+          - name: MYSQL_USER
+            value: "mysql"
+          - name: MYSQL_PASSWORD
+            value: "secret"
+          - name: MYSQL_DATABASE
+            value: "data"
+          - name: MYSQL_ROOT_PASSWORD
+            value: "supersecret"
+        ports:
+          - name: mysql
+            containerPort: 3306
+        volumeMounts:
+          - name: mysql-nfs-persistent-storage
+            mountPath: "/var/lib/mysql"
+    volumes:
+      - name: mysql-nfs-persistent-storage
+        persistentVolumeClaim:
+          claimName: pvc-5g-db-01
+
+- kind: Service
+  apiVersion: v1
+  metadata:
+    labels:
+      name: mysql
+    name: mysql
+  spec:
+    clusterIP: 10.96.0.101
+    ports:
+      - port: 3306
+    selector:
+      name: mysql
+

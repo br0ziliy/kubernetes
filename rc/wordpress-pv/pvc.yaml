@@ -1,0 +1,25 @@
+kind: List
+apiVersion: v1
+items:
+
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: pvc-5g-db-01
+  spec:
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 5Gi
+
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: pvc-3g-web-01
+  spec:
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 3Gi
