@@ -1,0 +1,7 @@
+apiVersion: kubeadm.k8s.io/v1alpha1
+kind: MasterConfiguration
+etcd:
+  endpoints:
+{% for host in groups.etcd %}
+  - http://{{ hostvars[host].ansible_default_ipv4.address }}:2379
+{% endfor %}"

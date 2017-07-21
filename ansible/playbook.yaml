@@ -7,7 +7,6 @@
       template:
         src:    templates/etc_hosts.j2
         dest:   /etc/hosts
-        backup: yes
         owner:  root
         group:  root
         mode:   0644
@@ -20,12 +19,11 @@
       template:
         src:    templates/kubernetes_repo.j2
         dest:   /etc/yum.repos.d/kubernetes.repo
-        backup: yes
         owner:  root
         group:  root
         mode:   0644
 
-- hosts: etcd_cluster
+- hosts: etcd
   vars_files:
     - external_variables.yaml
   tasks:
@@ -39,7 +37,6 @@
       template:
         src:    templates/etcd_conf.j2
         dest:   /etc/etcd/etcd.conf
-        backup: yes
         owner:  root
         group:  root
         mode:   0644
@@ -47,7 +44,7 @@
     - name: Enable ETCD service
       service:
         name:    etcd
-        state:   running
+        state:   started
         enabled: yes
   handlers:
     - name: Restart ETCD service
@@ -58,8 +55,49 @@
 - hosts: k8s_master
   vars_files:
     - external_variables.yaml
-  # tasks:
-  #   - name: 
+  tasks:
+    - name: Install K8s packages
+      package:
+        name:  "{{ item }}"
+        state: present
+      with_items:
+        - kubelet
+        - kubeadm
+        - kubectl
+        - kubernetes-cni
+    - name: Enable K8s service
+      service:
+        name:    kubelet
+        state:   started
+        enabled: yes
+
+    - name: Configure K8s - kubeadm
+      template:
+        src:    templates/kubeadm_config_yaml.j2
+        dest:   /root/kubeadm-config.yaml
+        owner:  root
+        group:  root
+        mode:   0644
+
+    - name: Configure K8s - Calico
+      template:
+        src:    templates/calico_external_etcd_yaml.j2
+        dest:   /root/calico-external-etcd.yaml
+        owner:  root
+        group:  root
+        mode:   0644
+
+
+
+
+  handlers:
+    - name: Restart K8s service
+      service:
+        name:  kubelet
+        state: restarted
+
+
+
 
 - hosts: k8s_node
   vars_files:
