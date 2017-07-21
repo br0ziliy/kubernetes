@@ -1,0 +1,5 @@
+# Ansible requirements file for roles
+# - name: common
+#   src: https://github.com/mtecer/ansible-common.git
+#   version: master
+
