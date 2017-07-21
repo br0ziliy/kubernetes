@@ -5,8 +5,57 @@
   tasks:
     - name: Update /etc/hosts file
       template:
-        src: etc_hosts.j2
+        src: templates/etc_hosts.j2
         dest: /etc/hosts
         owner: root
         group: root
         mode: 0644
+
+- hosts: k8s
+  vars_files:
+    - external_variables.yaml
+  tasks:
+    - name: Create Kubernetes repo
+      template:
+        src: templates/kubernetes_repo.j2
+        dest: /etc/yum.repos.d/kubernetes.repo
+        owner: root
+        group: root
+        mode: 0644
+
+- hosts: etcd_cluster
+  vars_files:
+    - external_variables.yaml
+  tasks:
+    - name: Install etcd package
+      package:
+        name:   "{{ item }}"
+        state:  present
+      with_items:
+        - etcd
+    - name: Create etcd configuration
+      template:
+        src: templates/etcd_conf.j2
+        dest: /etc/etcd/etcd.conf
+        owner: root
+        group: root
+        mode: 0644
+
+
+- hosts: k8s_master
+  vars_files:
+    - external_variables.yaml
+  tasks:
+    - name: 
+
+- hosts: k8s_node
+  vars_files:
+    - external_variables.yaml
+  tasks:
+    - name: 
+
+- hosts: k8s_admin
+  vars_files:
+    - external_variables.yaml
+  tasks:
+    - name: 

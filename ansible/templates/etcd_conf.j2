@@ -1,0 +1,11 @@
+[member]
+ETCD_NAME={{ ansible_hostname }}
+ETCD_DATA_DIR="/var/lib/etcd/{{ ansible_hostname }}.etcd"
+ETCD_LISTEN_PEER_URLS="http://{{ hostvars[ansible_hostname].ansible_default_ipv4.address }}:2380"
+ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+
+[cluster]
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://{{ hostvars[ansible_hostname].ansible_default_ipv4.address }}:2380"
+ETCD_INITIAL_CLUSTER="etcd01=http://10.199.200.101:2380,etcd02=http://10.199.200.102:2380,etcd03=http://10.199.200.103:2380,etcd04=http://10.199.200.104:2380,etcd05=http://10.199.200.105:2380"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd.sc9.openair.os.local"
+ETCD_ADVERTISE_CLIENT_URLS="http://{{ hostvars[ansible_hostname].ansible_default_ipv4.address }}:2379"
