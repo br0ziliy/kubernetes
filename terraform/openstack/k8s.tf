@@ -2,34 +2,39 @@ data "openstack_images_image_v2" "etcd_image" {
   name = "${var.etcd_image}"
   most_recent = true
 }
-
 data "openstack_images_image_v2" "k8s_master_image" {
   name = "${var.k8s_master_image}"
   most_recent = true
 }
-
 data "openstack_images_image_v2" "k8s_node_image" {
   name = "${var.k8s_node_image}"
   most_recent = true
 }
-
 data "openstack_images_image_v2" "k8s_admin_image" {
   name = "${var.k8s_admin_image}"
   most_recent = true
 }
-
 data "template_file" "bootstap_ansible_sh" {
   template = "${file("${path.module}/templates/bootstrap-ansible.sh.tpl")}"
   vars {
-      ssh_private_key = "${var.ssh_private_key}"
+    ssh_private_key = "${var.ssh_private_key}"
   }
 }
-
 data "template_file" "ansible_external_variables_yaml" {
   template = "${file("${path.module}/templates/external_variables.yaml.tpl")}"
   vars {
       openstack_vm_domain_name = "${var.openstack_vm_domain_name}"
   }
+}
+
+resource "openstack_compute_servergroup_v2" "k8s_etcd" {
+  name     = "k8s_etcd"
+  policies = ["anti-affinity"]
+}
+
+resource "openstack_compute_servergroup_v2" "k8s_node" {
+  name     = "k8s_node"
+  policies = ["anti-affinity"]
 }
 
 resource "openstack_compute_instance_v2" "etcd_cluster" {
@@ -38,7 +43,6 @@ resource "openstack_compute_instance_v2" "etcd_cluster" {
   flavor_name             = "${var.etcd_flavor}"
   key_pair                = "${var.etcd_keypair}"
   security_groups         = [ "${var.etcd_securitygroups}" ]
-
   block_device {
     uuid                  = "${data.openstack_images_image_v2.etcd_image.id}"
     source_type           = "image"
@@ -47,9 +51,11 @@ resource "openstack_compute_instance_v2" "etcd_cluster" {
     destination_type      = "volume"
     delete_on_termination = true
   }
-
   network {
     name                  = "${var.etcd_network}"
+  }
+  scheduler_hints {
+    group                 = "${openstack_compute_servergroup_v2.k8s_etcd.id}"
   }
 }
 
@@ -63,7 +69,6 @@ resource "openstack_compute_instance_v2" "k8s_master" {
   key_pair                = "${var.k8s_master_keypair}"
   security_groups         = [ "${var.k8s_master_securitygroups}" ]
   # user_data               = "${data.template_file.bootstap_ansible_sh.rendered}"
-
   block_device {
     uuid                  = "${data.openstack_images_image_v2.k8s_master_image.id}"
     source_type           = "image"
@@ -72,7 +77,6 @@ resource "openstack_compute_instance_v2" "k8s_master" {
     destination_type      = "volume"
     delete_on_termination = true
   }
-
   network {
     name                  = "${var.k8s_master_network}"
   }
@@ -89,7 +93,6 @@ resource "openstack_compute_instance_v2" "k8s_node" {
   key_pair                = "${var.k8s_node_keypair}"
   security_groups         = [ "${var.k8s_node_securitygroups}" ]
   # user_data               = "${data.template_file.bootstap_ansible_sh.rendered}"
-
   block_device {
     uuid                  = "${data.openstack_images_image_v2.k8s_node_image.id}"
     source_type           = "image"
@@ -98,9 +101,11 @@ resource "openstack_compute_instance_v2" "k8s_node" {
     destination_type      = "volume"
     delete_on_termination = true
   }
-
   network {
     name                  = "${var.k8s_node_network}"
+  }
+  scheduler_hints {
+    group                 = "${openstack_compute_servergroup_v2.k8s_node.id}"
   }
 }
 
@@ -116,7 +121,6 @@ resource "openstack_compute_instance_v2" "k8s_admin" {
   key_pair                = "${var.k8s_admin_keypair}"
   security_groups         = [ "${var.k8s_admin_securitygroups}" ]
   user_data               = "${data.template_file.bootstap_ansible_sh.rendered}"
-
   block_device {
     uuid                  = "${data.openstack_images_image_v2.k8s_admin_image.id}"
     source_type           = "image"
@@ -125,7 +129,6 @@ resource "openstack_compute_instance_v2" "k8s_admin" {
     destination_type      = "volume"
     delete_on_termination = true
   }
-
   network {
     name                  = "${var.k8s_admin_network}"
   }
@@ -135,14 +138,12 @@ resource "null_resource" "ansible_predeploy" {
   triggers {
     key = "${uuid()}"
   }
-
   depends_on = [
     "openstack_compute_instance_v2.etcd_cluster",
     "openstack_compute_instance_v2.k8s_master",
     "openstack_compute_instance_v2.k8s_node",
     "openstack_compute_instance_v2.k8s_admin",
   ]
-
   connection {
     type        = "ssh"
     agent       = false
@@ -151,7 +152,6 @@ resource "null_resource" "ansible_predeploy" {
     user        = "root"
     private_key = "${var.ssh_private_key}"
   }
-
   provisioner "remote-exec" {
     inline = [
       "echo [etcd_cluster] > /ansible/environments/dev/hosts",
@@ -165,7 +165,6 @@ resource "null_resource" "ansible_predeploy" {
       "echo '\n[k8s:children]\nk8s_master\nk8s_node' >> /ansible/environments/dev/hosts",
       ]
   }
-
   provisioner "file" {
     content     = "${data.template_file.ansible_external_variables_yaml.rendered}"
     destination = "/ansible/external_variables.yaml"
@@ -195,23 +194,18 @@ resource "null_resource" "ansible_predeploy" {
 output "etcd_cluster_info" {
   value = "${join( "," , openstack_compute_instance_v2.etcd_cluster.*.access_ip_v4)}"
 }
-
 output "etcd_cluster" {
   value = "${join( "," , openstack_compute_instance_v2.etcd_cluster.*.access_ip_v4)}"
 }
-
 output "etcd01" {
   value = "${openstack_compute_instance_v2.etcd_cluster.0.access_ip_v4}"
 }
-
 output "etcd02" {
   value = "${openstack_compute_instance_v2.etcd_cluster.1.access_ip_v4}"
 }
-
 output "etcd03" {
   value = "${openstack_compute_instance_v2.etcd_cluster.2.access_ip_v4}"
 }
-
 output "k8s_admin" {
   value = "${openstack_compute_instance_v2.k8s_admin.0.access_ip_v4}"
 }

@@ -29,13 +29,13 @@
   vars_files:
     - external_variables.yaml
   tasks:
-    - name: Install etcd package
+    - name: Install ETCD package
       package:
         name:  "{{ item }}"
         state: present
       with_items:
         - etcd
-    - name: Create etcd configuration
+    - name: Configure ETCD service
       template:
         src:    templates/etcd_conf.j2
         dest:   /etc/etcd/etcd.conf
@@ -43,7 +43,17 @@
         owner:  root
         group:  root
         mode:   0644
-
+      notify: Restart ETCD service
+    - name: Enable ETCD service
+      service:
+        name:    etcd
+        state:   running
+        enabled: yes
+  handlers:
+    - name: Restart ETCD service
+      service:
+        name:  etcd
+        state: restarted
 
 - hosts: k8s_master
   vars_files:
