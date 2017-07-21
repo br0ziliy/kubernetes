@@ -37,7 +37,7 @@ resource "openstack_compute_servergroup_v2" "k8s_node" {
   policies = ["anti-affinity"]
 }
 
-resource "openstack_compute_instance_v2" "etcd_cluster" {
+resource "openstack_compute_instance_v2" "etcd" {
   count                   = "${var.etcd_count}"
   name                    = "etcd0${count.index+1}"
   flavor_name             = "${var.etcd_flavor}"
@@ -61,7 +61,7 @@ resource "openstack_compute_instance_v2" "etcd_cluster" {
 
 resource "openstack_compute_instance_v2" "k8s_master" {
   depends_on = [
-    "openstack_compute_instance_v2.etcd_cluster",
+    "openstack_compute_instance_v2.etcd",
   ]
   count                   = "1"
   name                    = "kube-master"
@@ -84,7 +84,7 @@ resource "openstack_compute_instance_v2" "k8s_master" {
 
 resource "openstack_compute_instance_v2" "k8s_node" {
   depends_on = [
-    "openstack_compute_instance_v2.etcd_cluster",
+    "openstack_compute_instance_v2.etcd",
     "openstack_compute_instance_v2.k8s_master",
   ]
   count                   = "${var.k8s_node_count}"
@@ -111,7 +111,7 @@ resource "openstack_compute_instance_v2" "k8s_node" {
 
 resource "openstack_compute_instance_v2" "k8s_admin" {
   depends_on = [
-    "openstack_compute_instance_v2.etcd_cluster",
+    "openstack_compute_instance_v2.etcd",
     "openstack_compute_instance_v2.k8s_master",
     "openstack_compute_instance_v2.k8s_node",
   ]
@@ -139,7 +139,7 @@ resource "null_resource" "ansible_predeploy" {
     key = "${uuid()}"
   }
   depends_on = [
-    "openstack_compute_instance_v2.etcd_cluster",
+    "openstack_compute_instance_v2.etcd",
     "openstack_compute_instance_v2.k8s_master",
     "openstack_compute_instance_v2.k8s_node",
     "openstack_compute_instance_v2.k8s_admin",
@@ -154,8 +154,8 @@ resource "null_resource" "ansible_predeploy" {
   }
   provisioner "remote-exec" {
     inline = [
-      "echo [etcd_cluster] > /ansible/environments/dev/hosts",
-      "echo \"${join("\n",formatlist("%s ansible_ssh_host=%s", openstack_compute_instance_v2.etcd_cluster.*.name, openstack_compute_instance_v2.etcd_cluster.*.access_ip_v4))}\" >> /ansible/environments/dev/hosts",
+      "echo [etcd] > /ansible/environments/dev/hosts",
+      "echo \"${join("\n",formatlist("%s ansible_ssh_host=%s", openstack_compute_instance_v2.etcd.*.name, openstack_compute_instance_v2.etcd.*.access_ip_v4))}\" >> /ansible/environments/dev/hosts",
       "echo '\n[k8s_admin]' >> /ansible/environments/dev/hosts",
       "echo \"${join("\n",formatlist("%s ansible_ssh_host=%s", openstack_compute_instance_v2.k8s_admin.*.name, openstack_compute_instance_v2.k8s_admin.*.access_ip_v4))}\" >> /ansible/environments/dev/hosts",
       "echo '\n[k8s_master]' >> /ansible/environments/dev/hosts",
@@ -191,20 +191,20 @@ resource "null_resource" "ansible_predeploy" {
   # }
 }
 
-output "etcd_cluster_info" {
-  value = "${join( "," , openstack_compute_instance_v2.etcd_cluster.*.access_ip_v4)}"
+output "etcd_info" {
+  value = "${join( "," , openstack_compute_instance_v2.etcd.*.access_ip_v4)}"
 }
-output "etcd_cluster" {
-  value = "${join( "," , openstack_compute_instance_v2.etcd_cluster.*.access_ip_v4)}"
+output "etcd" {
+  value = "${join( "," , openstack_compute_instance_v2.etcd.*.access_ip_v4)}"
 }
 output "etcd01" {
-  value = "${openstack_compute_instance_v2.etcd_cluster.0.access_ip_v4}"
+  value = "${openstack_compute_instance_v2.etcd.0.access_ip_v4}"
 }
 output "etcd02" {
-  value = "${openstack_compute_instance_v2.etcd_cluster.1.access_ip_v4}"
+  value = "${openstack_compute_instance_v2.etcd.1.access_ip_v4}"
 }
 output "etcd03" {
-  value = "${openstack_compute_instance_v2.etcd_cluster.2.access_ip_v4}"
+  value = "${openstack_compute_instance_v2.etcd.2.access_ip_v4}"
 }
 output "k8s_admin" {
   value = "${openstack_compute_instance_v2.k8s_admin.0.access_ip_v4}"
