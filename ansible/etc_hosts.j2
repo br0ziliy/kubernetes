@@ -1,0 +1,11 @@
+127.0.0.1    localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1          localhost localhost.localdomain localhost6 localhost6.localdomain6
+{% for host in groups.all %}
+{% if 'ansible_default_ipv4' in hostvars.host` %}
+{{ hostvars.host.default_ipv4.address }}  {{ host }}  {{ host }}
+{% endif %}
+{% endfor %}
+# {{ hostvars['haproxy']['ansible_default_ipv4']['address'] }}  {{ ilo_pce_fqdn }}
+# {{ hostvars['pxb']['ansible_default_ipv4']['address'] }}  {{ ilo_venrepo_fqdn }}
+# {{ hostvars['haproxy']['ansible_local']['custom']['network']['public_ip'] }}  {{ ilo_pce_fqdn }}
+
