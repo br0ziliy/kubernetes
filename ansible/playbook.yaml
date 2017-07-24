@@ -166,13 +166,19 @@
       args:
         chdir:   /root
       register: k8s_join_command
+    - name: Create Calico networking
+      shell: |
+        kubectl apply -f /root/calico-external-etcd.yaml > k8s_calico_networking.log
+      args:
+        chdir:   /root
+        creates: k8s_calico_networking.log
 
 
 - hosts: k8s_node
   vars_files:
     - external_variables.yaml
   tasks:
-    - name: Configure asdasda K8s - kubeadm
+    - name: Ensure K8s node join script exists
       copy:
         content: "#!/bin/bash\n{{ hostvars['kube-master'].k8s_join_command.stdout }} --skip-preflight-checks\n"
         dest:    /root/k8s_join.sh
@@ -180,7 +186,12 @@
         group:   root
         mode:    0700
         force:   no
-
+    - name: Join nodes to K8s
+      shell: |
+        k8s_join.sh > k8s_node_join.log
+      args:
+        chdir:   /root
+        creates: k8s_node_join.log
 
 - hosts: k8s_admin
   vars_files:
