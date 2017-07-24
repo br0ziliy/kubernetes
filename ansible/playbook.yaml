@@ -61,10 +61,10 @@
         name:  "{{ item }}"
         state: present
       with_items:
-        - kubelet
-        - kubeadm
-        - kubectl
-        - kubernetes-cni
+        - kubelet-1.7.0
+        - kubeadm-1.7.0
+        - kubectl-1.7.0
+        - kubernetes-cni-0.5.1
     - name: Enable K8s service
       service:
         name:    kubelet

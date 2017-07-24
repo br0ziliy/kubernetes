@@ -4,4 +4,4 @@ etcd:
   endpoints:
 {% for host in groups.etcd %}
   - http://{{ hostvars[host].ansible_default_ipv4.address }}:2379
-{% endfor %}"
+{% endfor %}
