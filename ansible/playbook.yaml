@@ -175,7 +175,7 @@
     - name: Configure asdasda K8s - kubeadm
       copy:
         content: "#!/bin/bash\n{{ hostvars['kube-master'].k8s_join_command.stdout }} --skip-preflight-checks\n"
-        dest:    /root/kubeadm-join.sh
+        dest:    /root/k8s_join.sh
         owner:   root
         group:   root
         mode:    0700
