@@ -56,6 +56,13 @@
   vars_files:
     - external_variables.yaml
   tasks:
+    - name: Ensure proxies are set for K8s
+      template:
+        src:    templates/etc_profile_d_proxy_sh.j2
+        dest:   /etc/profile.d/proxy.sh
+        owner:  root
+        group:  root
+        mode:   0644
     - name: Ensure bridge-nf-call exists for K8s
       sysctl:
         name: "{{ item.option }}"
@@ -109,13 +116,12 @@
         enabled: yes
     - name: Install K8s packages
       package:
-        name:  "{{ item }}"
+        name:     "{{ item }}"
         state: present
       with_items:
         - kubectl-1.7.0
-        - kubeadm-1.7.0
         - kubelet-1.7.0
-        - kubernetes-cni-0.5.1
+        - kubeadm-1.7.0
     - name: Enable K8s service
       service:
         name:    kubelet
