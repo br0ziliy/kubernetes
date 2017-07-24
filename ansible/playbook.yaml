@@ -154,13 +154,32 @@
         owner:  root
         group:  root
         mode:   0644
+    - name: Run kubeadm to initialize k8s
+      shell: |
+        kubeadm init --config kubeadm-config.yaml --skip-preflight-checks | grep 'kubeadm join' | xargs > k8s_join.sh
+      args:
+        chdir:   /root
+        creates: k8s_join.sh
+    - name: Run kubeadm to initialize k8s
+      command: |
+        cat k8s_join.sh
+      args:
+        chdir:   /root
+      register: k8s_join_command
 
 
 - hosts: k8s_node
   vars_files:
     - external_variables.yaml
-  # tasks:
-  #   - name: 
+  tasks:
+    - name: Configure asdasda K8s - kubeadm
+      copy:
+        content: "#!/bin/bash\n{{ hostvars['kube-master'].k8s_join_command }}  --skip-preflight-checks\n"
+        dest:    /root/kubeadm-join.sh
+        owner:   root
+        group:   root
+        mode:    0700
+        force:   no
 
 
 - hosts: k8s_admin
