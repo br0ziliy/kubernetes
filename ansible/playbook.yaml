@@ -83,11 +83,29 @@
         name:    docker
         state:   started
         enabled: yes
+    - name: Install K8s packages
+      package:
+        name:     "{{ item }}"
+        state: present
+      with_items:
+        - kubectl-1.7.0
+        - kubelet-1.7.0
+        - kubeadm-1.7.0
+    - name: Enable K8s service
+      service:
+        name:    kubelet
+        state:   started
+        enabled: yes
   handlers:
     - name: Restart Docker service
       service:
         name:  docker
-        state: restarted        
+        state: restarted
+    - name: Restart K8s service
+      service:
+        name:  kubelet
+        state: restarted
+
 - hosts: etcd
   vars_files:
     - external_variables.yaml
@@ -117,23 +135,11 @@
         name:  etcd
         state: restarted
 
+
 - hosts: k8s_master
   vars_files:
     - external_variables.yaml
   tasks:
-    - name: Install K8s packages
-      package:
-        name:     "{{ item }}"
-        state: present
-      with_items:
-        - kubectl-1.7.0
-        - kubelet-1.7.0
-        - kubeadm-1.7.0
-    - name: Enable K8s service
-      service:
-        name:    kubelet
-        state:   started
-        enabled: yes
     - name: Configure K8s - kubeadm
       template:
         src:    templates/kubeadm_config_yaml.j2
@@ -148,13 +154,6 @@
         owner:  root
         group:  root
         mode:   0644
-  handlers:
-    - name: Restart K8s service
-      service:
-        name:  kubelet
-        state: restarted
-
-
 
 
 - hosts: k8s_node
@@ -162,6 +161,7 @@
     - external_variables.yaml
   # tasks:
   #   - name: 
+
 
 - hosts: k8s_admin
   vars_files:
