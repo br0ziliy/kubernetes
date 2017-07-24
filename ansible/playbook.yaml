@@ -180,7 +180,7 @@
         owner:  root
         group:  root
         mode:   0400
-        force:  no
+        force:  yes
         remote_src: yes
     - name: Create Calico networking
       shell: |
@@ -203,7 +203,7 @@
         force:   no
     - name: Join nodes to K8s
       shell: |
-        k8s_join.sh > k8s_node_join.log
+        /root/k8s_join.sh > k8s_node_join.log
       args:
         chdir:   /root
         creates: k8s_node_join.log
