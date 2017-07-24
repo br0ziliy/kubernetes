@@ -56,20 +56,52 @@
   vars_files:
     - external_variables.yaml
   tasks:
-    - name: Install K8s packages
+    - name: Install Docker packages
       package:
         name:  "{{ item }}"
         state: present
       with_items:
-        - kubelet-1.7.0
-        - kubeadm-1.7.0
-        - kubectl-1.7.0
-        - kubernetes-cni-0.5.1
-    - name: Enable K8s service
-      service:
-        name:    kubelet
-        state:   started
-        enabled: yes
+        - docker-1.12.6-16.el7.centos
+    - name: Ensure Docker systemd directory exists
+      file:
+        path:   /etc/systemd/system/docker.service.d
+        state:  directory
+    - name: Configure Docker - systemd
+      template:
+        src:    templates/docker_service_d_50_http_proxy.j2
+        dest:   /etc/systemd/system/docker.service.d/50-http-proxy.conf
+        owner:  root
+        group:  root
+        mode:   0644
+    - name: Configure Docker - sysconfig/docker
+      template:
+        src:    templates/docker_sysconfig_docker.j2
+        dest:   /etc/sysconfig/docker
+        owner:  root
+        group:  root
+        mode:   0644
+    - name: Configure Docker - sysconfig//docker-storage-setup
+      template:
+        src:    templates/docker_sysconfig_docker_storage_setup.j2
+        dest:   /etc/sysconfig//docker-storage-setup
+        owner:  root
+        group:  root
+        mode:   0644
+
+    # - name: Install K8s packages
+    #   package:
+    #     name:  "{{ item }}"
+    #     state: present
+    #   with_items:
+    #     - kubelet-1.7.0
+    #     - kubeadm-1.7.0
+    #     - kubectl-1.7.0
+    #     - kubernetes-cni-0.5.1
+    # - name: Enable K8s service
+    #   service:
+    #     name:    kubelet
+    #     state:   started
+    #     enabled: yes
 
     - name: Configure K8s - kubeadm
       template:

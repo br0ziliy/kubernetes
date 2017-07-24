@@ -1,0 +1,6 @@
+OPTIONS='--selinux-enabled=false --log-driver=journald --signature-verification=false'
+if [ -z "${DOCKER_CERT_PATH}" ]; then
+    DOCKER_CERT_PATH=/etc/docker
+fi
+ADD_REGISTRY='--add-registry docker-registry:5000'
+INSECURE_REGISTRY="--insecure-registry docker-registry:5000"
