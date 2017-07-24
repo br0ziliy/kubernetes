@@ -65,7 +65,7 @@
         reload: yes
         sysctl_file: /etc/sysctl.d/bridge-nf-call.conf
       with_items:
-        - option: net.bridge.bridge-nf-call-iptable
+        - option: net.bridge.bridge-nf-call-iptables
           value: 1
         - option: net.bridge.bridge-nf-call-ip6tables
           value: 1
