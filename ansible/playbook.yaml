@@ -56,6 +56,21 @@
   vars_files:
     - external_variables.yaml
   tasks:
+    - name: Ensure bridge-nf-call exists for K8s
+      sysctl:
+        name: "{{ item.option }}"
+        value: "{{ item.value }}"
+        sysctl_set: yes
+        state: present
+        reload: yes
+        sysctl_file: /etc/sysctl.d/bridge-nf-call.conf
+      with_items:
+        - option: net.bridge.bridge-nf-call-iptable
+          value: 1
+        - option: net.bridge.bridge-nf-call-ip6tables
+          value: 1
+        - option: net.bridge.bridge-nf-call-arptables
+          value: 1
     - name: Install Docker packages
       package:
         name:  "{{ item }}"
@@ -83,26 +98,29 @@
     - name: Configure Docker - sysconfig//docker-storage-setup
       template:
         src:    templates/docker_sysconfig_docker_storage_setup.j2
-        dest:   /etc/sysconfig//docker-storage-setup
+        dest:   /etc/sysconfig/docker-storage-setup
         owner:  root
         group:  root
         mode:   0644
-
-    # - name: Install K8s packages
-    #   package:
-    #     name:  "{{ item }}"
-    #     state: present
-    #   with_items:
-    #     - kubelet-1.7.0
-    #     - kubeadm-1.7.0
-    #     - kubectl-1.7.0
-    #     - kubernetes-cni-0.5.1
-    # - name: Enable K8s service
-    #   service:
-    #     name:    kubelet
-    #     state:   started
-    #     enabled: yes
-
+    - name: Enable Docker service
+      service:
+        name:    docker
+        state:   started
+        enabled: yes
+    - name: Install K8s packages
+      package:
+        name:  "{{ item }}"
+        state: present
+      with_items:
+        - kubelet-1.7.0
+        - kubeadm-1.7.0
+        - kubectl-1.7.0
+        - kubernetes-cni-0.5.1
+    - name: Enable K8s service
+      service:
+        name:    kubelet
+        state:   started
+        enabled: yes
     - name: Configure K8s - kubeadm
       template:
         src:    templates/kubeadm_config_yaml.j2
@@ -110,7 +128,6 @@
         owner:  root
         group:  root
         mode:   0644
-
     - name: Configure K8s - Calico
       template:
         src:    templates/calico_external_etcd_yaml.j2

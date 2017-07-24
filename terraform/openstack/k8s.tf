@@ -23,7 +23,10 @@ data "template_file" "bootstap_ansible_sh" {
 data "template_file" "ansible_external_variables_yaml" {
   template = "${file("${path.module}/templates/external_variables.yaml.tpl")}"
   vars {
-      openstack_vm_domain_name = "${var.openstack_vm_domain_name}"
+      openstack_vm_api_ip       = "${var.openstack_vm_api_ip}"
+      openstack_vm_domain_name  = "${var.openstack_vm_domain_name}"
+      openstack_vm_no_proxy     = "${var.openstack_vm_no_proxy}"
+      openstack_vm_proxy        = "${var.openstack_vm_proxy}"
   }
 }
 

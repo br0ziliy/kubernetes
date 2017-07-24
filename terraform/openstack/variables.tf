@@ -1,6 +1,9 @@
 # Secret environment variables are sourced from  ~/.terraform_openstack_sandbox_rc
 # source  ~/.terraform_openstack_sandbox_rc
+variable "openstack_vm_api_ip" {}
 variable "openstack_vm_domain_name" {}
+variable "openstack_vm_no_proxy" {}
+variable "openstack_vm_proxy" {}
 
 variable "auth_url" {}
 variable "domain_name" {}
