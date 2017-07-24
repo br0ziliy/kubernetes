@@ -22,40 +22,6 @@
         owner:  root
         group:  root
         mode:   0644
-
-- hosts: etcd
-  vars_files:
-    - external_variables.yaml
-  tasks:
-    - name: Install ETCD package
-      package:
-        name:  "{{ item }}"
-        state: present
-      with_items:
-        - etcd
-    - name: Configure ETCD service
-      template:
-        src:    templates/etcd_conf.j2
-        dest:   /etc/etcd/etcd.conf
-        owner:  root
-        group:  root
-        mode:   0644
-      notify: Restart ETCD service
-    - name: Enable ETCD service
-      service:
-        name:    etcd
-        state:   started
-        enabled: yes
-  handlers:
-    - name: Restart ETCD service
-      service:
-        name:  etcd
-        state: restarted
-
-- hosts: k8s_master
-  vars_files:
-    - external_variables.yaml
-  tasks:
     - name: Ensure proxies are set for K8s
       template:
         src:    templates/etc_profile_d_proxy_sh.j2
@@ -95,6 +61,7 @@
         owner:  root
         group:  root
         mode:   0644
+      notify: Restart Docker service
     - name: Configure Docker - sysconfig/docker
       template:
         src:    templates/docker_sysconfig_docker.j2
@@ -102,18 +69,58 @@
         owner:  root
         group:  root
         mode:   0644
-    - name: Configure Docker - sysconfig//docker-storage-setup
+      notify: Restart Docker service
+    - name: Configure Docker - sysconfig/docker-storage-setup
       template:
         src:    templates/docker_sysconfig_docker_storage_setup.j2
         dest:   /etc/sysconfig/docker-storage-setup
         owner:  root
         group:  root
         mode:   0644
+      notify: Restart Docker service
     - name: Enable Docker service
       service:
         name:    docker
         state:   started
         enabled: yes
+  handlers:
+    - name: Restart Docker service
+      service:
+        name:  docker
+        state: restarted        
+- hosts: etcd
+  vars_files:
+    - external_variables.yaml
+  tasks:
+    - name: Install ETCD package
+      package:
+        name:  "{{ item }}"
+        state: present
+      with_items:
+        - etcd
+    - name: Configure ETCD service
+      template:
+        src:    templates/etcd_conf.j2
+        dest:   /etc/etcd/etcd.conf
+        owner:  root
+        group:  root
+        mode:   0644
+      notify: Restart ETCD service
+    - name: Enable ETCD service
+      service:
+        name:    etcd
+        state:   started
+        enabled: yes
+  handlers:
+    - name: Restart ETCD service
+      service:
+        name:  etcd
+        state: restarted
+
+- hosts: k8s_master
+  vars_files:
+    - external_variables.yaml
+  tasks:
     - name: Install K8s packages
       package:
         name:     "{{ item }}"
@@ -141,10 +148,6 @@
         owner:  root
         group:  root
         mode:   0644
-
-
-
-
   handlers:
     - name: Restart K8s service
       service:
