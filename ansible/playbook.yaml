@@ -166,13 +166,28 @@
       args:
         chdir:   /root
       register: k8s_join_command
+    - name: Ensure K8s kubectl directory exists
+      file:
+        path:   /root/.kube
+        state:  directory
+        owner:  root
+        group:  root
+        mode:   0500
+    - name: Copy K8s kubectl configuration to ~/.kube
+      copy:
+        src:    /etc/kubernetes/admin.conf
+        dest:   /root/.kube/config
+        owner:  root
+        group:  root
+        mode:   0400
+        force:  no
+        remote_src: yes
     - name: Create Calico networking
       shell: |
         kubectl apply -f /root/calico-external-etcd.yaml > k8s_calico_networking.log
       args:
         chdir:   /root
         creates: k8s_calico_networking.log
-
 
 - hosts: k8s_node
   vars_files:
