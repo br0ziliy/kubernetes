@@ -88,9 +88,9 @@
         name:     "{{ item }}"
         state: present
       with_items:
-        - kubectl-1.7.0
-        - kubelet-1.7.0
-        - kubeadm-1.7.0
+        - "kubectl-{{ k8s_version }}"
+        - "kubelet-{{ k8s_version }}"
+        - "kubeadm-{{ k8s_version }}"
     - name: Enable K8s service
       service:
         name:    kubelet
@@ -154,18 +154,24 @@
         owner:  root
         group:  root
         mode:   0644
-    - name: Run kubeadm to initialize k8s
+    - name: Run kubeadm to initialize K8s
       shell: |
         kubeadm init --config kubeadm-config.yaml --skip-preflight-checks | grep 'kubeadm join' | xargs > k8s_join.sh
       args:
         chdir:   /root
         creates: k8s_join.sh
-    - name: Run kubeadm to initialize k8s
+    - name: Register K8s node join command - k8s_join_command
       shell: |
         cat k8s_join.sh
       args:
         chdir:   /root
       register: k8s_join_command
+    - name: Register K8s admin configuration - k8s_admin_config
+      shell: |
+        cat  /root/.kube/config
+      args:
+        chdir:   /root
+      register: k8s_admin_config
     - name: Ensure K8s kubectl directory exists
       file:
         path:   /root/.kube
@@ -173,21 +179,29 @@
         owner:  root
         group:  root
         mode:   0500
-    - name: Copy K8s kubectl configuration to ~/.kube
+    - name: Create K8s admin configuration - /root/.kube/config
       copy:
-        src:    /etc/kubernetes/admin.conf
-        dest:   /root/.kube/config
-        owner:  root
-        group:  root
-        mode:   0400
-        force:  yes
-        remote_src: yes
+        content: "{{ hostvars['kube-master'].k8s_admin_config.stdout }}"
+        dest:    /root/.kube/config
+        owner:   root
+        group:   root
+        mode:    0700
+        force:   no
+    - name: Ensure K8s node join script exists
+      copy:
+        content: "#!/bin/bash\n{{ hostvars['kube-master'].k8s_join_command.stdout }} --skip-preflight-checks\n"
+        dest:    /root/k8s_join.sh
+        owner:   root
+        group:   root
+        mode:    0700
+        force:   no
     - name: Create Calico networking
       shell: |
         kubectl apply -f /root/calico-external-etcd.yaml > k8s_calico_networking.log
       args:
         chdir:   /root
         creates: k8s_calico_networking.log
+
 
 - hosts: k8s_node
   vars_files:
@@ -208,8 +222,43 @@
         chdir:   /root
         creates: k8s_node_join.log
 
+
 - hosts: k8s_admin
   vars_files:
     - external_variables.yaml
-  # tasks:
-  #   - name: 
+  tasks:
+    - name: Create Kubernetes repo
+      template:
+        src:    templates/kubernetes_repo.j2
+        dest:   /etc/yum.repos.d/kubernetes.repo
+        owner:  root
+        group:  root
+        mode:   0644
+    - name: Ensure proxies are set for K8s
+      template:
+        src:    templates/etc_profile_d_proxy_sh.j2
+        dest:   /etc/profile.d/proxy.sh
+        owner:  root
+        group:  root
+        mode:   0644
+    - name: Install K8s kubectl
+      package:
+        name:     "{{ item }}"
+        state: present
+      with_items:
+        - "kubectl-{{ k8s_version }}"
+    - name: Ensure K8s kubectl directory exists
+      file:
+        path:   /root/.kube
+        state:  directory
+        owner:  root
+        group:  root
+        mode:   0500
+    - name: Create K8s admin configuration - /root/.kube/config
+      copy:
+        content: "{{ hostvars['kube-master'].k8s_admin_config.stdout }}"
+        dest:    /root/.kube/config
+        owner:   root
+        group:   root
+        mode:    0700
+        force:   no

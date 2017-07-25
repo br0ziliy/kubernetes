@@ -1,7 +1,7 @@
 #!/bin/bash -x
 
-ANSIBLE_USER=${ansible_user}
-ANSIBLE_HOME=${ansible_home}
+ANSIBLE_USER="${ansible_user}"
+ANSIBLE_HOME="${ansible_home}"
 GITREPO="${k8s_ansible_repo}"
 
 source /etc/profile.d/proxy.sh

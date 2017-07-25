@@ -17,7 +17,10 @@ data "openstack_images_image_v2" "k8s_admin_image" {
 data "template_file" "bootstap_ansible_sh" {
   template = "${file("${path.module}/templates/bootstrap-ansible.sh.tpl")}"
   vars {
-    ssh_private_key = "${var.ssh_private_key}"
+    ssh_private_key   = "${var.ssh_private_key}"
+    ansible_user      = "${var.ansible_user}"
+    ansible_home      = "${var.ansible_home}"
+    k8s_ansible_repo  = "${var.k8s_ansible_repo}"
   }
 }
 data "template_file" "ansible_external_variables_yaml" {
