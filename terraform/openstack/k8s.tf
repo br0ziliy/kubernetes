@@ -38,7 +38,6 @@ resource "openstack_compute_servergroup_v2" "k8s_etcd" {
   name     = "k8s_etcd"
   policies = ["anti-affinity"]
 }
-
 resource "openstack_compute_servergroup_v2" "k8s_node" {
   name     = "k8s_node"
   policies = ["anti-affinity"]
@@ -178,7 +177,8 @@ resource "null_resource" "ansible" {
   }
   provisioner "remote-exec" "run_ansible" {
     inline = [
-      "cd /ansible",
+      "cd /ansible && git pull",
+      "while true; do if [ -x /usr/bin/ansible-playbook ]; then break; fi done",
       "ansible-playbook playbook.yaml",
     ]
   }

@@ -3,8 +3,9 @@
   vars_files:
     - external_variables.yaml
   tasks:
-    - name: "{{ ansible_hostname }}"
+    - name: Update hostname
       hostname:
+        name: "{{ ansible_hostname }}"
     - name: Update /etc/hosts file
       template:
         src:    templates/etc_hosts.j2
@@ -168,12 +169,6 @@
       args:
         chdir:   /root
       register: k8s_join_command
-    - name: Register K8s admin configuration - k8s_admin_config
-      shell: |
-        cat  /root/.kube/config
-      args:
-        chdir:   /root
-      register: k8s_admin_config
     - name: Ensure K8s kubectl directory exists
       file:
         path:   /root/.kube
@@ -183,12 +178,19 @@
         mode:   0500
     - name: Create K8s admin configuration - /root/.kube/config
       copy:
-        content: "{{ hostvars['kube-master'].k8s_admin_config.stdout }}"
-        dest:    /root/.kube/config
-        owner:   root
-        group:   root
-        mode:    0700
-        force:   no
+        src:    /etc/kubernetes/admin.conf
+        dest:   /root/.kube/config
+        owner:  root
+        group:  root
+        mode:   0700
+        force:  no
+        remote_src: yes
+    - name: Register K8s admin configuration - k8s_admin_config
+      shell: |
+        cat  /root/.kube/config
+      args:
+        chdir:   /root
+      register: k8s_admin_config
     - name: Ensure K8s node join script exists
       copy:
         content: "#!/bin/bash\n{{ hostvars['kube-master'].k8s_join_command.stdout }} --skip-preflight-checks\n"
