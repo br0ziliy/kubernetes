@@ -5,6 +5,12 @@ variable "openstack_vm_domain_name" {}
 variable "openstack_vm_no_proxy" {}
 variable "openstack_vm_proxy" {}
 
+variable "ansible_user" {}
+variable "ansible_home" {}
+
+variable "k8s_version" {}
+variable "k8s_ansible_repo" {}
+
 variable "auth_url" {}
 variable "domain_name" {}
 variable "tenant_name" {}

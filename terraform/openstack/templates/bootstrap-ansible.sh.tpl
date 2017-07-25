@@ -1,8 +1,8 @@
 #!/bin/bash -x
 
-ANSIBLE_USER='root'
-ANSIBLE_HOME='/root'
-GITREPO="https://github.com/mtecer/kubernetes.git"
+ANSIBLE_USER=${ansible_user}
+ANSIBLE_HOME=${ansible_home}
+GITREPO="${k8s_ansible_repo}"
 
 source /etc/profile.d/proxy.sh
 

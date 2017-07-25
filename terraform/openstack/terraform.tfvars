@@ -3,6 +3,12 @@ openstack_vm_domain_name  = "vm.sc9b.os.internal"
 openstack_vm_proxy        = "http://10.199.51.5:3128"
 openstack_vm_no_proxy     = "127.0.0.1,localhost,169.254.169.254"
 
+ansible_user              = "root"
+ansible_home              = "/root"
+
+k8s_version               = "1.7.0"
+k8s_ansible_repo          = "https://github.com/mtecer/kubernetes.git"
+
 etcd_count                = "3"
 etcd_image                = "CentOS-ml-7.3.1706"
 etcd_flavor               = "m1.micro"
