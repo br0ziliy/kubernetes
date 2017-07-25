@@ -3,6 +3,8 @@
   vars_files:
     - external_variables.yaml
   tasks:
+    - name: "{{ ansible_hostname }}"
+      hostname:
     - name: Update /etc/hosts file
       template:
         src:    templates/etc_hosts.j2

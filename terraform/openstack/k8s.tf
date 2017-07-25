@@ -177,42 +177,24 @@ resource "null_resource" "ansible_predeploy" {
     destination = "/ansible/external_variables.yaml"
   }
 
-  # provisioner "file" "setup_etc_hosts" {
-  #   content     = "${data.template_file.etc_hosts.rendered}"
-  #   destination = "/etc/hosts"
-  # }
-
-  # provisioner "remote-exec" "wait_for_provisioning" { inline = [ "sleep 10" ] }
-
-  # provisioner "file" "setup_etc_ansible_hosts" {
-  #   content     = "${data.template_file.etc_ansible_hosts.rendered}"
-  #   destination = "/home/opc/hosts"
-  # }
-
-  # provisioner "remote-exec" "run_ansible" {
-  #   inline = [
-  #     "cd /ansible",
-  #     "ansible-galaxy install -r /ansible/requirements.yaml --roles-path /ansible/roles",
-  #     "ansible -m ping all",
-  #   ]
-  # }
+  provisioner "remote-exec" "run_ansible" {
+    inline = [
+      "cd /ansible",
+      "ansible-playbook playbook.yaml",
+    ]
+  }
 }
 
-output "etcd_info" {
-  value = "${join( "," , openstack_compute_instance_v2.etcd.*.access_ip_v4)}"
+output "Etcd Servers" {
+  value = "\n${join( "\n", formatlist("  %s - %s", openstack_compute_instance_v2.etcd.*.name, openstack_compute_instance_v2.etcd.*.access_ip_v4) )}\n"
 }
-output "etcd" {
-  value = "${join( "," , openstack_compute_instance_v2.etcd.*.access_ip_v4)}"
+output "K8s Servers" {
+  value = "\n${join( "\n", formatlist("  %s - %s", openstack_compute_instance_v2.k8s_node.*.name, openstack_compute_instance_v2.k8s_node.*.access_ip_v4) )}\n"
 }
-output "etcd01" {
-  value = "${openstack_compute_instance_v2.etcd.0.access_ip_v4}"
+output "K8s Admin Servers" {
+  value = "\n${join( "\n", formatlist("  %s - %s", openstack_compute_instance_v2.k8s_admin.*.name, openstack_compute_instance_v2.k8s_admin.*.access_ip_v4) )}\n"
 }
-output "etcd02" {
-  value = "${openstack_compute_instance_v2.etcd.1.access_ip_v4}"
-}
-output "etcd03" {
-  value = "${openstack_compute_instance_v2.etcd.2.access_ip_v4}"
-}
-output "k8s_admin" {
-  value = "${openstack_compute_instance_v2.k8s_admin.0.access_ip_v4}"
+output "K8s Master Servers" {
+  value = "\n${join( "\n", formatlist("  %s - %s", openstack_compute_instance_v2.k8s_master.*.name, openstack_compute_instance_v2.k8s_master.*.access_ip_v4) )}\n"
+  # value = "${openstack_compute_instance_v2.k8s_master.0.access_ip_v4}"
 }
