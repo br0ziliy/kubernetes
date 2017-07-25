@@ -141,7 +141,7 @@ resource "openstack_compute_instance_v2" "k8s_admin" {
   }
 }
 
-resource "null_resource" "ansible_predeploy" {
+resource "null_resource" "ansible" {
   triggers {
     key = "${uuid()}"
   }
@@ -159,7 +159,7 @@ resource "null_resource" "ansible_predeploy" {
     user        = "root"
     private_key = "${var.ssh_private_key}"
   }
-  provisioner "remote-exec" {
+  provisioner "remote-exec" "ansible_hosts"{
     inline = [
       "echo [etcd] > /ansible/environments/dev/hosts",
       "echo \"${join("\n",formatlist("%s ansible_ssh_host=%s", openstack_compute_instance_v2.etcd.*.name, openstack_compute_instance_v2.etcd.*.access_ip_v4))}\" >> /ansible/environments/dev/hosts",
@@ -172,11 +172,10 @@ resource "null_resource" "ansible_predeploy" {
       "echo '\n[k8s:children]\nk8s_master\nk8s_node' >> /ansible/environments/dev/hosts",
       ]
   }
-  provisioner "file" {
+  provisioner "file" "ansible_variables"{
     content     = "${data.template_file.ansible_external_variables_yaml.rendered}"
     destination = "/ansible/external_variables.yaml"
   }
-
   provisioner "remote-exec" "run_ansible" {
     inline = [
       "cd /ansible",
