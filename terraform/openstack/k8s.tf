@@ -179,6 +179,7 @@ resource "null_resource" "ansible" {
     inline = [
       "cd /ansible && git pull",
       "while true; do if [ -x /usr/bin/ansible-playbook ]; then break; fi done",
+      "sleep 10",
       "ansible-playbook playbook.yaml",
     ]
   }

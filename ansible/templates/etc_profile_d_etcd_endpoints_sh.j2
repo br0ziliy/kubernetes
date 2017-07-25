@@ -1,0 +1,4 @@
+export ETCDCTL_ENDPOINTS="{% for host in groups.etcd %}
+http://{{ hostvars[host].ansible_default_ipv4.address }}:2379
+{%- if not loop.last %},{% endif %}
+{% endfor %}"

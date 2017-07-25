@@ -245,6 +245,13 @@
         owner:  root
         group:  root
         mode:   0644
+    - name: Ensure etcd endpoints are set
+      template:
+        src:    templates/etc_profile_d_etcd_endpoints_sh.j2
+        dest:   /etc/profile.d/etcd_endpoints.sh
+        owner:  root
+        group:  root
+        mode:   0644
     - name: Install K8s kubectl
       package:
         name:     "{{ item }}"
