@@ -27,6 +27,7 @@ data "template_file" "ansible_external_variables_yaml" {
       openstack_vm_domain_name  = "${var.openstack_vm_domain_name}"
       openstack_vm_no_proxy     = "${var.openstack_vm_no_proxy}"
       openstack_vm_proxy        = "${var.openstack_vm_proxy}"
+      k8s_version               = "${var.k8s_version}"
   }
 }
 
