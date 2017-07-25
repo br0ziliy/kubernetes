@@ -31,7 +31,7 @@ k8s_master_network        = "net55"
 k8s_master_volume_size    = "20"
 k8s_master_securitygroups = "allow-all"
 
-k8s_node_count            = "3"
+k8s_node_count            = "6"
 k8s_node_image            = "CentOS-ml-7.3.1706"
 k8s_node_flavor           = "m1.medium"
 k8s_node_keypair          = "admin_os_sc9b"

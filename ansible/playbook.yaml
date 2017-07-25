@@ -256,7 +256,7 @@
         mode:   0500
     - name: Create K8s admin configuration - /root/.kube/config
       copy:
-        content: "{{ hostvars['kube-master'].k8s_admin_config.stdout }}"
+        content: "{{ hostvars['kube-master'].k8s_admin_config.stdout }}\n"
         dest:    /root/.kube/config
         owner:   root
         group:   root
