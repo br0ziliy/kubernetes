@@ -93,7 +93,7 @@
       with_items:
         - "kubectl-{{ k8s_version }}"
         - "kubelet-{{ k8s_version }}"
-        - "kubeadm-{{ k8s_version }}"
+        - "kubeadm-1.7.0"
     - name: Enable K8s service
       service:
         name:    kubelet
