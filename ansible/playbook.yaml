@@ -175,8 +175,8 @@
         mode:   0644
     - name: Configure K8s - Calico
       template:
-        src:    templates/calico_external_etcd_yaml.j2
-        dest:   /root/calico-external-etcd.yaml
+        src:    templates/calico_networks_yaml.j2
+        dest:   /root/calico-networks.yaml
         owner:  root
         group:  root
         mode:   0644
@@ -222,12 +222,12 @@
         group:   root
         mode:    0700
         force:   no
-    # - name: Create Calico networking
-    #   shell: |
-    #     kubectl apply -f /root/calico-external-etcd.yaml > k8s_calico_networking.log
-    #   args:
-    #     chdir:   /root
-    #     creates: k8s_calico_networking.log
+    - name: Create Calico networking
+      shell: |
+        kubectl apply -f /root/calico-networks.yaml > k8s_calico_networking.log
+      args:
+        chdir:   /root
+        creates: k8s_calico_networking.log
 
 
 - hosts: k8s_node
