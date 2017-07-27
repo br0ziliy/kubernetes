@@ -8,6 +8,7 @@ variable "openstack_vm_proxy" {}
 variable "ansible_user" {}
 variable "ansible_home" {}
 
+variable "calicoctl_version" {}
 variable "k8s_version" {}
 variable "k8s_ansible_repo" {}
 

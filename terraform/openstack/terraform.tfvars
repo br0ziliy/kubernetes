@@ -6,7 +6,8 @@ openstack_vm_no_proxy     = "127.0.0.1,localhost,169.254.169.254"
 ansible_user              = "root"
 ansible_home              = "/root"
 
-k8s_version               = "1.7.0"
+calicoctl_version         = "1.3.0"
+k8s_version               = "1.7.2"
 k8s_ansible_repo          = "https://github.com/mtecer/kubernetes.git"
 
 etcd_count                = "3"

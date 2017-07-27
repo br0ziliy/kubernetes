@@ -88,8 +88,8 @@
         enabled: yes
     - name: Install K8s packages
       package:
-        name:     "{{ item }}"
-        state: present
+        name:   "{{ item }}"
+        state:  present
       with_items:
         - "kubectl-{{ k8s_version }}"
         - "kubelet-{{ k8s_version }}"
@@ -273,3 +273,27 @@
         group:   root
         mode:    0700
         force:   no
+    - name: Download latest calicoctl binary
+      get_url:
+        url: https://github.com/projectcalico/calicoctl/releases/download/v{{ calicoctl_version }}/calicoctl
+        dest: /usr/bin
+        owner: root
+        group: root
+        mode: 0500
+        creates: /usr/bin/calicoctl
+    - name: Create calico directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+      with_items:
+        - /etc/calico
+        - /var/log/calico
+    - name: Create calicoctl configuration - /etc/calico/calicoctl.cfg   
+      template:
+        src:    templates/calicoctl_cfg.j2
+        dest:   /etc/calico/calicoctl.cfg
+        owner:  root
+        group:  root
+        mode:   0600

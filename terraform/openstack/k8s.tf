@@ -26,11 +26,12 @@ data "template_file" "bootstap_ansible_sh" {
 data "template_file" "ansible_external_variables_yaml" {
   template = "${file("${path.module}/templates/external_variables.yaml.tpl")}"
   vars {
-      openstack_vm_api_ip       = "${var.openstack_vm_api_ip}"
-      openstack_vm_domain_name  = "${var.openstack_vm_domain_name}"
-      openstack_vm_no_proxy     = "${var.openstack_vm_no_proxy}"
-      openstack_vm_proxy        = "${var.openstack_vm_proxy}"
-      k8s_version               = "${var.k8s_version}"
+    openstack_vm_api_ip       = "${var.openstack_vm_api_ip}"
+    openstack_vm_domain_name  = "${var.openstack_vm_domain_name}"
+    openstack_vm_no_proxy     = "${var.openstack_vm_no_proxy}"
+    openstack_vm_proxy        = "${var.openstack_vm_proxy}"
+    k8s_version               = "${var.k8s_version}"
+    calicoctl_version         = "${var.calicoctl_version}"
   }
 }
 
@@ -175,14 +176,14 @@ resource "null_resource" "ansible" {
     content     = "${data.template_file.ansible_external_variables_yaml.rendered}"
     destination = "/ansible/external_variables.yaml"
   }
-  provisioner "remote-exec" "run_ansible" {
-    inline = [
-      "cd /ansible && git pull",
-      "while true; do if [ -x /usr/bin/ansible-playbook ]; then break; fi done",
-      "sleep 10",
-      "ansible-playbook playbook.yaml",
-    ]
-  }
+  # provisioner "remote-exec" "run_ansible" {
+  #   inline = [
+  #     "cd /ansible && git pull",
+  #     "while true; do if [ -x /usr/bin/ansible-playbook ]; then break; fi done",
+  #     "sleep 10",
+  #     "ansible-playbook playbook.yaml",
+  #   ]
+  # }
 }
 
 output "Etcd Servers" {
