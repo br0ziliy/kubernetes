@@ -91,9 +91,10 @@
         name:   "{{ item }}"
         state:  present
       with_items:
-        - "kubectl-{{ k8s_version }}"
         - "kubelet-{{ k8s_version }}"
+        - "kubectl-{{ k8s_version }}"
         - "kubeadm-{{ k8s_version }}"
+
     - name: Enable K8s service
       service:
         name:    kubelet
@@ -161,18 +162,10 @@
         name:  etcd
         state: restarted
 
-
 - hosts: k8s_master
   vars_files:
     - external_variables.yaml
   tasks:
-    - name: Install K8s node packages
-      package:
-        name:   "{{ item }}"
-        state:  present
-      with_items:
-        - "kubectl-{{ k8s_version }}"
-        - "kubeadm-{{ k8s_version }}"
     - name: Configure K8s - kubeadm
       template:
         src:    templates/kubeadm_config_yaml.j2
