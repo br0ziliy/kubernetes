@@ -193,12 +193,12 @@
         owner:  root
         group:  root
         mode:   0644
-    # - name: Run kubeadm to initialize K8s
-    #   shell: |
-    #     kubeadm init --config kubeadm-config.yaml --pod-network-cidr=10.244.0.0/16 --skip-preflight-checks | grep 'kubeadm join' | xargs > k8s_join.sh
-    #   args:
-    #     chdir:   /root
-    #     creates: k8s_join.sh
+    - name: Run kubeadm to initialize K8s
+      shell: |
+        kubeadm init --config kubeadm-config.yaml --pod-network-cidr=10.244.0.0/16 --skip-preflight-checks | grep 'kubeadm join' | xargs > k8s_join.sh
+      args:
+        chdir:   /root
+        creates: k8s_join.sh
     - name: Register K8s node join command - k8s_join_command
       shell: |
         cat k8s_join.sh
@@ -212,7 +212,7 @@
         owner:  root
         group:  root
         mode:   0644
-      notify: Restart kubelet service
+      notify: Restart K8s service
     - name: Ensure K8s kubectl directory exists
       file:
         path:   /root/.kube
