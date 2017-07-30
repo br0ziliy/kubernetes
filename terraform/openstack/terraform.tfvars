@@ -7,7 +7,7 @@ ansible_user              = "root"
 ansible_home              = "/root"
 
 calicoctl_version         = "1.3.0"
-k8s_version               = "1.7.2"
+k8s_version               = "1.7.0"
 k8s_ansible_repo          = "https://github.com/mtecer/kubernetes.git"
 
 etcd_count                = "3"

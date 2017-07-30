@@ -86,42 +86,42 @@
         name:    docker
         state:   started
         enabled: yes
-    - name: Install K8s packages
+    - name: Install K8s node packages
       package:
         name:   "{{ item }}"
         state:  present
       with_items:
         - "kubectl-{{ k8s_version }}"
         - "kubelet-{{ k8s_version }}"
-        - "kubeadm-1.7.0"
+        - "kubeadm-{{ k8s_version }}"
     - name: Enable K8s service
       service:
         name:    kubelet
         state:   started
         enabled: yes
-    - name: Download latest calicoctl binary
-      get_url:
-        url: https://github.com/projectcalico/calicoctl/releases/download/v{{ calicoctl_version }}/calicoctl
-        dest: /usr/bin
-        owner: root
-        group: root
-        mode: 0500
-    - name: Create calico directories
-      file:
-        path: "{{ item }}"
-        state: directory
-        owner: root
-        group: root
-      with_items:
-        - /etc/calico
-        - /var/log/calico
-    - name: Create calicoctl configuration - /etc/calico/calicoctl.cfg   
-      template:
-        src:    templates/calicoctl_cfg.j2
-        dest:   /etc/calico/calicoctl.cfg
-        owner:  root
-        group:  root
-        mode:   0600
+    # - name: Download latest calicoctl binary
+    #   get_url:
+    #     url: https://github.com/projectcalico/calicoctl/releases/download/v{{ calicoctl_version }}/calicoctl
+    #     dest: /usr/bin
+    #     owner: root
+    #     group: root
+    #     mode: 0500
+    # - name: Create calico directories
+    #   file:
+    #     path: "{{ item }}"
+    #     state: directory
+    #     owner: root
+    #     group: root
+    #   with_items:
+    #     - /etc/calico
+    #     - /var/log/calico
+    # - name: Create calicoctl configuration - /etc/calico/calicoctl.cfg   
+    #   template:
+    #     src:    templates/calicoctl_cfg.j2
+    #     dest:   /etc/calico/calicoctl.cfg
+    #     owner:  root
+    #     group:  root
+    #     mode:   0600
   handlers:
     - name: Restart Docker service
       service:
@@ -166,6 +166,13 @@
   vars_files:
     - external_variables.yaml
   tasks:
+    - name: Install K8s node packages
+      package:
+        name:   "{{ item }}"
+        state:  present
+      with_items:
+        - "kubectl-{{ k8s_version }}"
+        - "kubeadm-{{ k8s_version }}"
     - name: Configure K8s - kubeadm
       template:
         src:    templates/kubeadm_config_yaml.j2
@@ -173,16 +180,30 @@
         owner:  root
         group:  root
         mode:   0644
-    - name: Configure K8s - Calico
+    # - name: Configure K8s - Calico
+    #   template:
+    #     src:    templates/calico_networks_yaml.j2
+    #     dest:   /root/calico-networks.yaml
+    #     owner:  root
+    #     group:  root
+    #     mode:   0644
+    - name: Create K8s Flannel RBAC configuration
       template:
-        src:    templates/calico_networks_yaml.j2
-        dest:   /root/calico-networks.yaml
+        src:    templates/kube_flannel_rbac_yml.j2
+        dest:   /root/kube-flannel-rbac.yml
+        owner:  root
+        group:  root
+        mode:   0644
+    - name: Create K8s Flannel configuration
+      template:
+        src:    templates/kube_flannel_yml.j2
+        dest:   /root/kube-flannel.yml
         owner:  root
         group:  root
         mode:   0644
     - name: Run kubeadm to initialize K8s
       shell: |
-        kubeadm init --config kubeadm-config.yaml --skip-preflight-checks | grep 'kubeadm join' | xargs > k8s_join.sh
+        kubeadm init --config kubeadm-config.yaml --pod-network-cidr=10.244.0.0/16 --skip-preflight-checks | grep 'kubeadm join' | xargs > k8s_join.sh
       args:
         chdir:   /root
         creates: k8s_join.sh
@@ -192,6 +213,14 @@
       args:
         chdir:   /root
       register: k8s_join_command
+    - name: Configure Restart K8s service - kube-controller-manager
+      template:
+        src:    templates/kube_controller_manager_yaml.j2
+        dest:   /etc/kubernetes/manifests/kube-controller-manager.yaml
+        owner:  root
+        group:  root
+        mode:   0644
+      notify: Restart kubelet service
     - name: Ensure K8s kubectl directory exists
       file:
         path:   /root/.kube
@@ -206,7 +235,7 @@
         owner:  root
         group:  root
         mode:   0700
-        force:  no
+        force:  yes
         remote_src: yes
     - name: Register K8s admin configuration - k8s_admin_config
       shell: |
@@ -221,14 +250,25 @@
         owner:   root
         group:   root
         mode:    0700
-        force:   no
-    - name: Create Calico networking
+        force:   yes
+    # - name: Create Calico networking
+    #   shell: |
+    #     kubectl apply -f /root/calico-networks.yaml > k8s_calico_networking.log
+    #   args:
+    #     chdir:   /root
+    #     creates: k8s_calico_networking.log
+    - name: Create Flannel networking
       shell: |
-        kubectl apply -f /root/calico-networks.yaml > k8s_calico_networking.log
+        ( kubectl apply -f /root/kube-flannel-rbac.yml
+        kubectl apply -f /root/kube-flannel.yml ) > k8s_flannel_networking.log
       args:
         chdir:   /root
-        creates: k8s_calico_networking.log
-
+        creates: k8s_flannel_networking.log
+  handlers:
+    - name: Restart K8s service
+      service:
+        name:  kubelet
+        state: restarted
 
 - hosts: k8s_node
   vars_files:
@@ -241,7 +281,7 @@
         owner:   root
         group:   root
         mode:    0700
-        force:   no
+        force:   yes
     - name: Join nodes to K8s
       shell: |
         /root/k8s_join.sh > k8s_node_join.log
@@ -295,27 +335,27 @@
         owner:   root
         group:   root
         mode:    0700
-        force:   no
-    - name: Download latest calicoctl binary
-      get_url:
-        url: https://github.com/projectcalico/calicoctl/releases/download/v{{ calicoctl_version }}/calicoctl
-        dest: /usr/bin
-        owner: root
-        group: root
-        mode: 0500
-    - name: Create calico directories
-      file:
-        path: "{{ item }}"
-        state: directory
-        owner: root
-        group: root
-      with_items:
-        - /etc/calico
-        - /var/log/calico
-    - name: Create calicoctl configuration - /etc/calico/calicoctl.cfg   
-      template:
-        src:    templates/calicoctl_cfg.j2
-        dest:   /etc/calico/calicoctl.cfg
-        owner:  root
-        group:  root
-        mode:   0600
+        force:   yes
+    # - name: Download latest calicoctl binary
+    #   get_url:
+    #     url: https://github.com/projectcalico/calicoctl/releases/download/v{{ calicoctl_version }}/calicoctl
+    #     dest: /usr/bin
+    #     owner: root
+    #     group: root
+    #     mode: 0500
+    # - name: Create calico directories
+    #   file:
+    #     path: "{{ item }}"
+    #     state: directory
+    #     owner: root
+    #     group: root
+    #   with_items:
+    #     - /etc/calico
+    #     - /var/log/calico
+    # - name: Create calicoctl configuration - /etc/calico/calicoctl.cfg   
+    #   template:
+    #     src:    templates/calicoctl_cfg.j2
+    #     dest:   /etc/calico/calicoctl.cfg
+    #     owner:  root
+    #     group:  root
+    #     mode:   0600
