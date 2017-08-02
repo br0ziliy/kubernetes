@@ -99,6 +99,10 @@
         name:    kubelet
         state:   started
         enabled: yes
+    - name: Ensure K8s lock directory
+      file:
+        path:   /var/lib/kubernetes
+        state:  directory
     # - name: Download latest calicoctl binary
     #   get_url:
     #     url: https://github.com/projectcalico/calicoctl/releases/download/v{{ calicoctl_version }}/calicoctl
@@ -196,15 +200,15 @@
     - name: Run kubeadm to initialize K8s
       shell: |
         unset http_proxy https_proxy ftp_proxy no_proxy
-        kubeadm init --config kubeadm-config.yaml --pod-network-cidr=10.244.0.0/16 --skip-preflight-checks | grep 'kubeadm join' | xargs > k8s_join.sh
+        kubeadm init --config kubeadm-config.yaml --pod-network-cidr=10.244.0.0/16 --skip-preflight-checks | grep 'kubeadm join' | xargs > /var/lib/kubernetes/k8s_join.sh
       args:
-        chdir:   /root
+        chdir:   /var/lib/kubernetes
         creates: k8s_join.sh
     - name: Register K8s node join command - k8s_join_command
       shell: |
         cat k8s_join.sh
       args:
-        chdir:   /root
+        chdir:   /var/lib/kubernetes
       register: k8s_join_command
     - name: Configure Restart K8s service - kube-controller-manager
       template:
@@ -239,7 +243,7 @@
     - name: Ensure K8s node join script exists
       copy:
         content: "#!/bin/bash\n{{ hostvars['kube-master'].k8s_join_command.stdout }} --skip-preflight-checks\n"
-        dest:    /root/k8s_join.sh
+        dest:    /var/lib/kubernetes/k8s_join.sh
         owner:   root
         group:   root
         mode:    0700
@@ -252,21 +256,23 @@
     #     creates: k8s_calico_networking.log
     - name: Create Flannel networking
       shell: |
-        ( kubectl apply -f /root/kube-flannel-rbac.yml
-        kubectl apply -f /root/kube-flannel.yml ) > k8s_flannel_networking.log
+        ( cd /root/ansible/examples/addons/flannel
+        kubectl apply -f kube-flannel-rbac.yml
+        kubectl apply -f kube-flannel.yml ) > /var/lib/kubernetes/k8s_flannel.log
       args:
-        chdir:   /root
-        creates: k8s_flannel_networking.log
+        chdir:   /var/lib/kubernetes
+        creates: k8s_flannel.log
     - name: Download Kubernetes Addons
       git:
         repo: https://github.com/mtecer/kubernetes.git
         dest: /root/ansible
     - name: Create Kubernetes dashboard
       shell: |
-        ( kubectl apply -f /root/ansible/examples/addons/kubernetes-dashboard.yaml
-        kubectl apply -f /root/ansible/examples/addons/heapster ) > k8s_dashboard.log
+        ( cd /root/ansible/examples/addons/flannel
+        kubectl apply -f kubernetes-dashboard.yaml
+        kubectl apply -f heapster ) > /var/lib/kubernetes/k8s_dashboard.log
       args:
-        chdir:   /root
+        chdir:   /var/lib/kubernetes
         creates: k8s_dashboard.log
   handlers:
     - name: Restart K8s service
@@ -281,7 +287,7 @@
     - name: Ensure K8s node join script exists
       copy:
         content: "#!/bin/bash\n{{ hostvars['kube-master'].k8s_join_command.stdout }} --skip-preflight-checks\n"
-        dest:    /root/k8s_join.sh
+        dest:    /var/lib/kubernetes/k8s_join.sh
         owner:   root
         group:   root
         mode:    0700
@@ -289,11 +295,10 @@
     - name: Join nodes to K8s
       shell: |
         unset http_proxy https_proxy ftp_proxy no_proxy
-        /root/k8s_join.sh > k8s_node_join.log
+        /var/lib/kubernetes/k8s_join.sh > /var/lib/kubernetes/k8s_join.log
       args:
-        chdir:   /root
-        creates: k8s_node_join.log
-
+        chdir:   /var/lib/kubernetes
+        creates: k8s_join.log
 
 - hosts: k8s_admin
   vars_files:
