@@ -257,6 +257,10 @@
       args:
         chdir:   /root
         creates: k8s_flannel_networking.log
+    - name: Download Kubernetes Addons
+      git:
+        repo: https://github.com/mtecer/kubernetes.git
+        dest: /root/ansible
     - name: Create Kubernetes dashboard
       shell: |
         ( kubectl apply -f /root/ansible/examples/addons/kubernetes-dashboard.yaml
