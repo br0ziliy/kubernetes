@@ -24,19 +24,6 @@ spec:
     - --cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt
     - --allocate-node-cidrs=true
     - --cluster-cidr=10.244.0.0/16
-    env:
-    - name: http_proxy
-      value: {{ openstack_vm_proxy }}
-    - name: ftp_proxy
-      value: {{ openstack_vm_proxy }}
-    - name: https_proxy
-      value: {{ openstack_vm_proxy }}
-    - name: no_proxy
-      value: 127.0.0.1,localhost,169.254.169.254,,{% for host in groups.etcd %}
-{{ hostvars[host].ansible_default_ipv4.address }},{%- endfor %}
-{% for host in groups.k8s_master %}
-{{ hostvars[host].ansible_default_ipv4.address }},{%- endfor %}
-{{ openstack_vm_api_ip }}
     image: gcr.io/google_containers/kube-controller-manager-amd64:v1.7.0
     livenessProbe:
       failureThreshold: 8
