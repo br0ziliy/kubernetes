@@ -195,6 +195,7 @@
         mode:   0644
     - name: Run kubeadm to initialize K8s
       shell: |
+        unset http_proxy https_proxy ftp_proxy no_proxy
         kubeadm init --config kubeadm-config.yaml --pod-network-cidr=10.244.0.0/16 --skip-preflight-checks | grep 'kubeadm join' | xargs > k8s_join.sh
       args:
         chdir:   /root
@@ -276,6 +277,7 @@
         force:   yes
     - name: Join nodes to K8s
       shell: |
+        unset http_proxy https_proxy ftp_proxy no_proxy
         /root/k8s_join.sh > k8s_node_join.log
       args:
         chdir:   /root
