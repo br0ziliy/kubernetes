@@ -257,7 +257,7 @@
       args:
         chdir:   /root
         creates: k8s_flannel_networking.log
-      - name: Create Kubernetes dashboard
+    - name: Create Kubernetes dashboard
       shell: |
         ( kubectl apply -f /root/ansible/examples/addons/kubernetes-dashboard.yaml
         kubectl apply -f /root/ansible/examples/addons/heapster ) > k8s_dashboard.log
